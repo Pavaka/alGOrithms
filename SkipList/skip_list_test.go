@@ -7,7 +7,7 @@ import (
 )
 
 func makeMockList() *SkipList {
-	list := new(SkipList)
+	list := NewSkipList()
 	node2 := new(Node)
 	node3 := new(Node)
 	node5 := new(Node)
@@ -17,7 +17,13 @@ func makeMockList() *SkipList {
 	node5.key = 5
 	node8.key = 8
 
-	list.head = node2
+	list.minNode.next = make([]*Node, 4)
+
+	list.minNode.next[0] = node2
+	list.minNode.next[1] = node2
+	list.minNode.next[2] = node2
+	list.minNode.next[3] = node2
+
 	node2.next = make([]*Node, 4)
 	node3.next = make([]*Node, 2)
 	node5.next = make([]*Node, 3)
@@ -26,11 +32,17 @@ func makeMockList() *SkipList {
 	node2.next[0] = node3
 	node2.next[1] = node3
 	node2.next[2] = node5
+	node2.next[3] = list.maxNode
 
 	node3.next[0] = node5
 	node3.next[1] = node5
 
 	node5.next[0] = node8
+	node5.next[1] = list.maxNode
+	node5.next[2] = list.maxNode
+
+	node8.next[0] = list.maxNode
+
 	return list
 }
 
@@ -67,7 +79,7 @@ func TestFindNonPresent(t *testing.T) {
 }
 
 func TestFindEmptyList(t *testing.T) {
-	list := new(SkipList)
+	list := NewSkipList()
 	node := list.Find(3)
 	if node != nil {
 		t.Errorf("Incorrect node found")
@@ -85,7 +97,7 @@ func TestFindGreatestSmallerThanInMiddle(t *testing.T) {
 func TestFindGreatestSmallerThanOutsideAfter(t *testing.T) {
 	list := makeMockList()
 	node := list.FindGreatestSmallerThan(100, NullOvershotHandler)
-	if node == nil || node.key != 8 {
+	if node.key != 8 {
 		t.Errorf("Incorrect node found")
 	}
 }
@@ -93,17 +105,47 @@ func TestFindGreatestSmallerThanOutsideAfter(t *testing.T) {
 func TestFindGreatestSmallerThanOutsideBelow(t *testing.T) {
 	list := makeMockList()
 	node := list.FindGreatestSmallerThan(1, NullOvershotHandler)
-	if node != nil {
+	if node != list.minNode {
 		t.Errorf("Incorrect node found")
 	}
 }
 
+func TestInsertBasic(t *testing.T) {
+	list := NewSkipList()
+	list.Insert(4)
+	list.Insert(1)
+	list.Insert(15)
+	list.Insert(10)
+
+	if list.Find(1).key != 1 {
+		t.Errorf("Incorrect node found")
+	}
+
+	if list.Find(4).key != 4 {
+		t.Errorf("Incorrect node found")
+	}
+
+	if list.Find(10).key != 10 {
+		t.Errorf("Incorrect node found")
+	}
+
+	if list.Find(15).key != 15 {
+		t.Errorf("Incorrect node found")
+	}
+
+}
+
 func TestRunPrint(t *testing.T) {
-	list := new(SkipList)
+	list := NewSkipList()
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	for i := 0; i < 20; i++ {
-		list.Insert(i)
+	for i := 0; i < 12; i++ {
+		list.Insert(rand.Int() % 80)
 	}
+	list.Print()
+}
+
+func TestPrintMock(t *testing.T) {
+	list := makeMockList()
 	list.Print()
 }
