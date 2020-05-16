@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"time"
 )
 
 type Node struct {
@@ -40,26 +41,48 @@ func generateLevel() int {
 	return level
 }
 
-type overshotHandler func(int, *Node)
+type shotOrOvershotHandler func(int, *Node)
 
-func NullOvershotHandler(int, *Node) {}
+func NullOvershotHandler(int, *Node) {
 
-func (list *SkipList) FindGreatestSmallerThan(key int, onOvershot overshotHandler) *Node {
-	currNode := list.minNode
-	currTowerPos := len(list.minNode.next) - 1
-	for {
-		if currNode.key == key || currTowerPos == -1 {
-			return currNode
+}
+
+func MakeSavePrevNodeOnShotOrOvershotHandler(maxObservableHeight int, prevNodesByLevel []*Node) shotOrOvershotHandler {
+	onOvershot := func(currLevel int, node *Node) {
+		if currLevel > maxObservableHeight {
+			return
 		}
 
-		if currNode.next[currTowerPos] == nil || currNode.next[currTowerPos].key > key {
-			onOvershot(currTowerPos, currNode)
+		prevNodesByLevel[currLevel] = node
+	}
+
+	return onOvershot
+}
+
+func (list *SkipList) FindGreatestSmallerThanOrEqual(key int, onShotOrOvershot shotOrOvershotHandler, stopAtFirstHit bool) *Node {
+	currNode := list.minNode
+	currTowerPos := len(list.minNode.next) - 1
+
+	for currTowerPos != -1 {
+
+		if stopAtFirstHit && currNode.next[currTowerPos].key == key {
+			return currNode.next[currTowerPos]
+		}
+
+		if currNode.next[currTowerPos].key >= key {
+			onShotOrOvershot(currTowerPos, currNode)
 			currTowerPos--
 			continue
 		}
 
 		currNode = currNode.next[currTowerPos]
+
 	}
+
+	if currNode.next[0].key == key {
+		return currNode.next[0]
+	}
+	return currNode
 }
 
 func (list *SkipList) Insert(key int) {
@@ -68,13 +91,7 @@ func (list *SkipList) Insert(key int) {
 	// before the new insertion node for each level
 	// in which it will exist
 	prevNodesByLevel := make([]*Node, newKeyHeight+1)
-	onOvershot := func(currLevel int, node *Node) {
-		if currLevel > newKeyHeight {
-			return
-		}
-
-		prevNodesByLevel[currLevel] = node
-	}
+	onOvershot := MakeSavePrevNodeOnShotOrOvershotHandler(newKeyHeight, prevNodesByLevel)
 
 	maxHeight := len(list.minNode.next) - 1
 
@@ -85,7 +102,7 @@ func (list *SkipList) Insert(key int) {
 		}
 	}
 
-	findGreatestSmallerThan := list.FindGreatestSmallerThan(key, onOvershot)
+	findGreatestSmallerThan := list.FindGreatestSmallerThanOrEqual(key, onOvershot, true)
 	if findGreatestSmallerThan.key == key {
 		return // The key is already present
 	}
@@ -102,8 +119,30 @@ func (list *SkipList) Insert(key int) {
 
 }
 
+func (list *SkipList) Delete(key int) {
+	maxHeight := len(list.minNode.next) - 1
+	prevNodesByLevel := make([]*Node, len(list.minNode.next))
+	onOvershot := MakeSavePrevNodeOnShotOrOvershotHandler(maxHeight, prevNodesByLevel)
+
+	found := list.FindGreatestSmallerThanOrEqual(key, onOvershot, false)
+
+	if found.key != key {
+		return
+	}
+
+	foundHeight := len(found.next) - 1
+	for i := range prevNodesByLevel {
+
+		if i > foundHeight {
+			break
+		}
+		prevNodesByLevel[i].next[i] = found.next[i]
+	}
+
+}
+
 func (list *SkipList) Find(key int) *Node {
-	res := list.FindGreatestSmallerThan(key, NullOvershotHandler)
+	res := list.FindGreatestSmallerThanOrEqual(key, NullOvershotHandler, true)
 	if res == list.minNode || res.key != key {
 		return nil
 	}
@@ -148,5 +187,11 @@ func (list *SkipList) Print() {
 }
 
 func main() {
+	list := NewSkipList()
+	rand.Seed(time.Now().UTC().UnixNano())
 
+	for i := 0; i < 12; i++ {
+		list.Insert(rand.Int() % 80)
+	}
+	list.Print()
 }

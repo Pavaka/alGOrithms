@@ -88,7 +88,7 @@ func TestFindEmptyList(t *testing.T) {
 
 func TestFindGreatestSmallerThanInMiddle(t *testing.T) {
 	list := makeMockList()
-	node := list.FindGreatestSmallerThan(4, NullOvershotHandler)
+	node := list.FindGreatestSmallerThanOrEqual(4, NullOvershotHandler, true)
 	if node == nil || node.key != 3 {
 		t.Errorf("Incorrect node found")
 	}
@@ -96,7 +96,7 @@ func TestFindGreatestSmallerThanInMiddle(t *testing.T) {
 
 func TestFindGreatestSmallerThanOutsideAfter(t *testing.T) {
 	list := makeMockList()
-	node := list.FindGreatestSmallerThan(100, NullOvershotHandler)
+	node := list.FindGreatestSmallerThanOrEqual(100, NullOvershotHandler, true)
 	if node.key != 8 {
 		t.Errorf("Incorrect node found")
 	}
@@ -104,7 +104,7 @@ func TestFindGreatestSmallerThanOutsideAfter(t *testing.T) {
 
 func TestFindGreatestSmallerThanOutsideBelow(t *testing.T) {
 	list := makeMockList()
-	node := list.FindGreatestSmallerThan(1, NullOvershotHandler)
+	node := list.FindGreatestSmallerThanOrEqual(1, NullOvershotHandler, true)
 	if node != list.minNode {
 		t.Errorf("Incorrect node found")
 	}
@@ -135,17 +135,71 @@ func TestInsertBasic(t *testing.T) {
 
 }
 
-func TestRunPrint(t *testing.T) {
+func TestDeleteBasic(t *testing.T) {
 	list := NewSkipList()
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	for i := 0; i < 12; i++ {
-		list.Insert(rand.Int() % 80)
+	list.Insert(2)
+	list.Insert(4)
+
+	list.Delete(4)
+
+	if list.Find(4) != nil {
+		t.Errorf("Incorrect node found")
 	}
-	list.Print()
+
+	list.Insert(6)
+
+	list.Insert(8)
+
+	list.Delete(8)
+
+	if list.Find(8) != nil {
+		t.Errorf("Incorrect node found")
+	}
+}
+func TestDeleteFromEmpty(t *testing.T) {
+	list := NewSkipList()
+	rand.Seed(time.Now().UTC().UnixNano())
+	list.Delete(5)
 }
 
-func TestPrintMock(t *testing.T) {
-	list := makeMockList()
-	list.Print()
+func TestDeleteSingle(t *testing.T) {
+	list := NewSkipList()
+	rand.Seed(time.Now().UTC().UnixNano())
+	list.Insert(5)
+	list.Delete(5)
+	if list.Find(5) != nil {
+		t.Errorf("Incorrect node found")
+	}
+}
+func TestDeleteFirst(t *testing.T) {
+	list := NewSkipList()
+	rand.Seed(time.Now().UTC().UnixNano())
+	list.Insert(1)
+	list.Insert(2)
+	list.Insert(3)
+
+	list.Delete(1)
+
+	if list.Find(1) != nil {
+		t.Errorf("Incorrect node found")
+	}
+	// Check it is still accessible
+	if list.Find(2).key != 2 {
+		t.Errorf("Incorrect node found")
+	}
+}
+func TestDeleteLast(t *testing.T) {
+	list := NewSkipList()
+	rand.Seed(time.Now().UTC().UnixNano())
+	list.Insert(1)
+	list.Insert(2)
+	list.Insert(3)
+
+	list.Delete(3)
+
+	if list.Find(3) != nil {
+		t.Errorf("Incorrect node found")
+	}
 }
