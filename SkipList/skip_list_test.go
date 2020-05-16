@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+	"time"
+)
 
 func makeMockList() *SkipList {
 	list := new(SkipList)
@@ -8,10 +12,10 @@ func makeMockList() *SkipList {
 	node3 := new(Node)
 	node5 := new(Node)
 	node8 := new(Node)
-	node2.value = 2
-	node3.value = 3
-	node5.value = 5
-	node8.value = 8
+	node2.key = 2
+	node3.key = 3
+	node5.key = 5
+	node8.key = 8
 
 	list.head = node2
 	node2.next = make([]*Node, 4)
@@ -27,36 +31,79 @@ func makeMockList() *SkipList {
 	node3.next[1] = node5
 
 	node5.next[0] = node8
-
-	list.sizes = make([]int, 4)
-	list.sizes[0] = 4
-	list.sizes[0] = 3
-	list.sizes[0] = 2
-	list.sizes[0] = 1
-
 	return list
 }
 
-func TestFind(t *testing.T) {
-
+func TestFindFirst(t *testing.T) {
 	list := makeMockList()
 	node := list.Find(3)
-	if node == nil || node.value != 3 {
+	if node == nil || node.key != 3 {
 		t.Errorf("Incorrect node found")
 	}
+}
 
-	node = list.Find(8)
-	if node == nil || node.value != 8 {
+func TestFindInMiddle(t *testing.T) {
+	list := makeMockList()
+	node := list.Find(5)
+	if node == nil || node.key != 5 {
 		t.Errorf("Incorrect node found")
 	}
+}
 
-	node = list.Find(4)
+func TestFindLast(t *testing.T) {
+	list := makeMockList()
+	node := list.Find(8)
+	if node == nil || node.key != 8 {
+		t.Errorf("Incorrect node found")
+	}
+}
+
+func TestFindNonPresent(t *testing.T) {
+	list := makeMockList()
+	node := list.Find(4)
+	if node != nil {
+		t.Errorf("Incorrect node found")
+	}
+}
+
+func TestFindEmptyList(t *testing.T) {
+	list := new(SkipList)
+	node := list.Find(3)
+	if node != nil {
+		t.Errorf("Incorrect node found")
+	}
+}
+
+func TestFindGreatestSmallerThanInMiddle(t *testing.T) {
+	list := makeMockList()
+	node := list.FindGreatestSmallerThan(4, NullOvershotHandler)
+	if node == nil || node.key != 3 {
+		t.Errorf("Incorrect node found")
+	}
+}
+
+func TestFindGreatestSmallerThanOutsideAfter(t *testing.T) {
+	list := makeMockList()
+	node := list.FindGreatestSmallerThan(100, NullOvershotHandler)
+	if node == nil || node.key != 8 {
+		t.Errorf("Incorrect node found")
+	}
+}
+
+func TestFindGreatestSmallerThanOutsideBelow(t *testing.T) {
+	list := makeMockList()
+	node := list.FindGreatestSmallerThan(1, NullOvershotHandler)
 	if node != nil {
 		t.Errorf("Incorrect node found")
 	}
 }
 
 func TestRunPrint(t *testing.T) {
-	list := makeMockList()
+	list := new(SkipList)
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	for i := 0; i < 20; i++ {
+		list.Insert(i)
+	}
 	list.Print()
 }
