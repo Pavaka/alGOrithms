@@ -1,11 +1,10 @@
-package main
+package skiplist
 
 import (
 	"bytes"
 	"fmt"
 	"math"
 	"math/rand"
-	"time"
 )
 
 // Node of the skip list
@@ -194,15 +193,4 @@ func (list *SkipList) findGreatestSmallerThanOrEqual(key int, onLevelSearchEnd o
 		return currNode.next[0]
 	}
 	return currNode
-}
-
-func main() {
-	// Sample test list
-	list := NewSkipList()
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	for i := 0; i < 20; i++ {
-		list.Insert(rand.Int() % 80)
-	}
-	list.Print()
 }
